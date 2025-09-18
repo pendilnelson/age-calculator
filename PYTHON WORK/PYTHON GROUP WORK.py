@@ -27,7 +27,7 @@ HTML_TEMPLATE = """
             border-radius: 20px;
             box-shadow: 0px 8px 20px rgba(0,0,0,0.3);
             text-align: center;
-            width: 400px;
+            width: 420px;
         }
         h2 {
             font-size: 32px;
@@ -63,7 +63,7 @@ HTML_TEMPLATE = """
         }
         h3 {
             margin-top: 20px;
-            font-size: 24px;
+            font-size: 22px;
             color: #00ffcc;
         }
     </style>
@@ -77,8 +77,8 @@ HTML_TEMPLATE = """
             <br>
             <button type="submit">Calculate Age</button>
         </form>
-        {% if age is not none %}
-            <h3>Your Age: {{ age }} years</h3>
+        {% if years is not none and days is not none %}
+            <h3>Your Age: {{ years }} years and {{ days }} days</h3>
         {% endif %}
     </div>
 </body>
@@ -87,14 +87,23 @@ HTML_TEMPLATE = """
 
 @app.route("/", methods=["GET", "POST"])
 def index():
-    age = None
+    years, days = None, None
     if request.method == "POST":
         dob_str = request.form["dob"]
         dob = datetime.strptime(dob_str, "%Y-%m-%d").date()
         today = datetime.today().date()
-        # Calculate age in years
-        age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
-    return render_template_string(HTML_TEMPLATE, age=age)
+
+        # Total days lived
+        total_days = (today - dob).days
+
+        # Years
+        years = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+
+        # Remaining days (after full years)
+        last_birthday = dob.replace(year=today.year if (today.month, today.day) >= (dob.month, dob.day) else today.year - 1)
+        days = (today - last_birthday).days
+
+    return render_template_string(HTML_TEMPLATE, years=years, days=days)
 
 if __name__ == "__main__":
     app.run(debug=True)
